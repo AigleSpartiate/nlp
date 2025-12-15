@@ -38,10 +38,7 @@ def main():
 
     if not lyrics:
         # demo lyrics
-        lyrics = """
-        小酒窝长睫毛
-        是你最美的记号
-        """
+        lyrics = """小酒窝长睫毛是你最美的记号"""
 
     pipeline = SongPipeline(config)
 
@@ -107,17 +104,6 @@ def demo():
     print(f" Note groups: {len(note_groups)}")
     print(f" Duration groups: {len(duration_groups)}")
     print(f" Match: {'YES' if word_count == len(note_groups) == len(duration_groups) else 'NO'}")
-
-    # example with English lyrics
-    english_lyrics = "Walking through the rain. Memories remain. Every drop that falls. Echoes through the halls."
-    print(f"\nInput lyrics (English): {english_lyrics}")
-
-    ds_input = pipeline.get_diffsinger_input(english_lyrics)
-    print("\nGenerated DiffSinger Input:")
-    print(f" text: '{ds_input['text']}'")
-    print(f" notes: '{ds_input['notes']}'")
-    print(f" notes_duration: '{ds_input['notes_duration']}'")
-
 
 if __name__ == "__main__":
     import sys

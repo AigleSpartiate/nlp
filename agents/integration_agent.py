@@ -146,9 +146,7 @@ class IntegrationAgent(BaseAgent):
         except Exception as e:
             self.log(f"Metadata save failed: {e}", "warning")
 
-        self.log("=" * 50)
-        self.log("Composition complete!")
-        self.log("=" * 50)
+        self.log("Composition complete.")
 
         return song
 
