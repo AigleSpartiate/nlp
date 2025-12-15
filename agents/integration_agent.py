@@ -12,18 +12,13 @@ from .lyric_analysis_agent import LyricAnalysisAgent
 from .melody_generation_agent import MelodyGenerationAgent
 from .singing_synthesis_agent import SingingSynthesisAgent
 from .audio_mixing_agent import AudioMixingAgent
+from .accompaniment_agent import AccompanimentAgent
 
 
 class IntegrationAgent(BaseAgent):
     """Agent for coordinating the complete workflow"""
 
-    def __init__(
-            self,
-            config: SongComposerConfig,
-            diffsinger_pipeline=None,
-            soundfont_path: Optional[str] = None,
-            **kwargs
-    ):
+    def __init__(self, config, diffsinger_pipeline=None, soundfont_path=None, **kwargs):
         super().__init__(config, **kwargs)
 
         # Initialize sub-agents
@@ -39,6 +34,7 @@ class IntegrationAgent(BaseAgent):
             soundfont_path=soundfont_path,
             llm_client=self.llm_client
         )
+        self.accompaniment_agent = AccompanimentAgent(config, self.llm_client)
 
     @property
     def name(self) -> str:
@@ -146,10 +142,17 @@ class IntegrationAgent(BaseAgent):
 
         if export_midi:
             try:
-                song.midi_path = song.melody.export_midi(paths["midi"])
-                self.log(f"MIDI exported: {song.midi_path}")
+                self.log("Generating full arrangement...")
+                # This now generates Melody + Bass + Drums + Chords
+                song.midi_path = self.accompaniment_agent.process(
+                    song.melody,
+                    paths["midi"]
+                )
+                self.log(f"Full arrangement MIDI exported: {song.midi_path}")
             except Exception as e:
-                self.log(f"MIDI export failed: {e}", "warning")
+                self.log(f"Accompaniment failed: {e}", "error")
+                # Fallback to simple melody
+                song.midi_path = song.melody.export_midi(paths["midi"])
 
         if synthesize:
             self.log("Synthesizing vocals...")

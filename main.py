@@ -24,7 +24,7 @@ def main():
     parser.add_argument("--no-synthesis", action="store_true", help="Skip audio synthesis")
     parser.add_argument("--no-midi", action="store_true", help="Skip MIDI export")
     parser.add_argument("--no-mix", action="store_true", help="Skip final audio mixing")
-    parser.add_argument("--melody-volume", type=float, default=1.0, help="Melody volume (0.0-1.0)")
+    parser.add_argument("--melody-volume", type=float, default=0.9, help="Melody volume (0.0-1.0)")
     parser.add_argument("--vocal-volume", type=float, default=0.4, help="Vocal volume (0.0-1.0)")
     parser.add_argument("--soundfont", type=str, help="Path to soundfont (.sf2) for MIDI rendering")
     parser.add_argument("--print-input", action="store_true", help="Print DiffSinger input only")
