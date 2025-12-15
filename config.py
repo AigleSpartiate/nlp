@@ -42,11 +42,33 @@ class MelodyConfig:
 
 
 @dataclass
+class DiffSingerExternalConfig:
+    """
+    Configuration for external DiffSinger execution.
+    """
+    # path to the Python executable in the DiffSinger environment (Python 3.8)
+    # Example: "/home/user/DiffSinger-master/.venv/bin/python"
+    python_path: str = os.getenv("DS_PYTHON_PATH", "python")
+
+    # path to the DiffSinger root directory
+    project_root: str = os.getenv("DS_PROJECT_ROOT", "../DiffSinger-master")
+
+    # path to the inference script relative to project root
+    script_path: str = "inference/svs/ds_e2e.py"
+
+    # checkpoint configuration
+    config_path: str = "usr/configs/midi/e2e/opencpop/ds100_adj_rel.yaml"
+    exp_name: str = "0228_opencpop_ds100_rel"
+
+
+@dataclass
 class SynthesisConfig:
     """Configuration for singing synthesis"""
     sample_rate: int = 44100
     output_format: str = "wav"
     default_singer: str = "opencpop"
+
+    external: DiffSingerExternalConfig = field(default_factory=DiffSingerExternalConfig)
 
 
 @dataclass

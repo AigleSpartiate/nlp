@@ -82,9 +82,7 @@ class IntegrationAgent(BaseAgent):
             export_midi: bool = True
     ) -> Song:
         """Run the complete workflow"""
-        self.log("=" * 50)
         self.log(f"Starting song composition: {title}")
-        self.log("=" * 50)
 
         # create song object
         song = Song(lyrics=lyrics, title=title)
