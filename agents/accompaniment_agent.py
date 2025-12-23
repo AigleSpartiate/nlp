@@ -119,7 +119,7 @@ Respond in JSON format:
         # Get chords from LLM
         prompt = self._get_chord_prompt(melody.key_signature, "pop", measures)
         try:
-            resp = self.llm_client.complete(prompt, temperature=0.7)
+            resp = self.llm_client.complete(prompt, temperature=1.0)
             data = json.loads(resp.replace("```json", "").replace("```", ""))
             chords_list = data.get("progression", ["C"] * measures)
         except Exception as e:
@@ -136,7 +136,7 @@ Respond in JSON format:
         melody_part.insert(0, instrument.Oboe())  # to make melody stand out
         score.insert(0, melody_part)
 
-        # Backing Tracks (NOT llm generated, the results are too bad)
+        # Backing Tracks (drums + bass NOT llm generated, the results are too bad)
         self._generate_drums(score, measures, melody.tempo)
         self._generate_bass(score, chords_list)
         self._generate_chords(score, chords_list, "pop")
