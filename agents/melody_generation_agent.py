@@ -136,15 +136,15 @@ Respond ONLY with the JSON object."""
         if not note or note.lower() == "rest":
             return "rest"
 
-        # Clean up the note string
+        # clean up the note string
         note = note.strip()
 
-        # If it's already in DiffSinger format, convert back
+        # if it's already in DiffSinger format, convert back (pipeline could be cleaner...)
         if "/" in note:
             from utils.music_utils import MusicUtils
             note = MusicUtils.from_diffsinger_format(note)
 
-        # Extract note name and octave
+        # extract note name and octave
         match = re.match(r'^([A-Ga-g][#b]?)(\d)$', note)
         if not match:
             return "C4"  # Default
@@ -152,7 +152,7 @@ Respond ONLY with the JSON object."""
         note_name = match.group(1).upper()
         octave = int(match.group(2))
 
-        # Clamp octave to valid range
+        # clamp octave to valid range
         octave = max(3, min(6, octave))
 
         return f"{note_name}{octave}"
@@ -176,7 +176,7 @@ Respond ONLY with the JSON object."""
             self.log(f"LLM generation failed: {e}, using rule-based", "warning")
             notes, durations = self._generate_rule_based_melody(num_words, analysis)
 
-        # Build melody structure
+        # build melody structure
         word_notes_list = []
 
         for i, word in enumerate(analysis.word_list):

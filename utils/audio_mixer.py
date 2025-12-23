@@ -19,7 +19,7 @@ class AudioMixer:
         self.soundfont_path = soundfont_path or self._find_default_soundfont()
 
     def _find_default_soundfont(self) -> Optional[str]:
-        """Find a default soundfont on the system"""
+        """Find default soundfont on the system"""
         common_paths = [
             "/usr/share/sounds/sf2/FluidR3_GM.sf2",
             "/usr/share/soundfonts/FluidR3_GM.sf2",
@@ -44,19 +44,18 @@ class AudioMixer:
         Ensure audio is a 1D float array.
         Handles stereo, nested arrays, and type conversion.
         """
-        # Convert to numpy array if not already
+        # convert to numpy array if not already
         if not isinstance(audio, np.ndarray):
             audio = np.array(audio)
 
-        # Log original shape for debugging
         logger.debug(f"{name} original shape: {audio.shape}, dtype: {audio.dtype}")
 
-        # Flatten if needed (handles deeply nested arrays)
+        # flatten if needed (to handle deeply nested arrays)
         if audio.ndim > 2:
             logger.warning(f"{name} has {audio.ndim} dimensions, flattening...")
             audio = audio.flatten()
 
-        # Handle stereo (2D) audio - convert to mono
+        # handle stereo audio - convert to mono
         if audio.ndim == 2:
             if audio.shape[0] == 2:
                 # Shape is (2, samples) - channels first
@@ -71,17 +70,17 @@ class AudioMixer:
                 # Likely (samples, channels)
                 audio = np.mean(audio, axis=1)
 
-        # Ensure 1D
+        # ensure 1D
         audio = audio.flatten()
 
-        # Ensure float type
+        # ensure float type
         if not np.issubdtype(audio.dtype, np.floating):
             audio = audio.astype(np.float64)
 
-        # Normalize to [-1, 1] if needed
+        # normalize to [-1, 1]
         max_val = np.max(np.abs(audio))
         if max_val > 1.0:
-            # Likely int16 or similar
+            # int16 or similar
             if max_val > 32767:
                 audio = audio / 32768.0  # int16 range
             elif max_val > 1.0:
@@ -113,7 +112,7 @@ class AudioMixer:
 
         logger.info(f"Rendering MIDI with soundfont: {sf_path}")
 
-        # Try using pretty_midi (preferred - pure Python with fluidsynth)
+        # Try using pretty_midi (preferred - fluidsynth)
         try:
             audio, sr = self._render_with_pretty_midi(midi_path, sf_path, output_path)
             audio = self._ensure_1d_float_array(audio, "midi_audio")
@@ -123,7 +122,7 @@ class AudioMixer:
         except Exception as e:
             logger.warning(f"pretty_midi rendering failed: {e}")
 
-        # Fallback to midi2audio
+        # Fallback to midi2audio (sounds worse overall for some reason)
         try:
             audio, sr = self._render_with_midi2audio(midi_path, sf_path, output_path)
             audio = self._ensure_1d_float_array(audio, "midi_audio")
@@ -133,7 +132,7 @@ class AudioMixer:
         except Exception as e:
             logger.warning(f"midi2audio rendering failed: {e}")
 
-        # Fallback to subprocess FluidSynth
+        # Fallback to subprocess FluidSynth (has to be installed manually which is NOT the case by default)
         audio, sr = self._render_with_fluidsynth_cli(midi_path, sf_path, output_path)
         audio = self._ensure_1d_float_array(audio, "midi_audio")
         return audio, sr
@@ -261,7 +260,7 @@ class AudioMixer:
         """
         Match the lengths of two audio arrays.
         """
-        # Ensure both are 1D first
+        # ensure both are 1D first
         audio1 = self._ensure_1d_float_array(audio1, "match_audio1")
         audio2 = self._ensure_1d_float_array(audio2, "match_audio2")
 
@@ -300,25 +299,24 @@ class AudioMixer:
         """
         logger.info(f"Mixing tracks - melody_vol: {melody_volume}, vocal_vol: {vocal_volume}")
 
-        # Ensure proper format
+        # ensure proper format
         melody_audio = self._ensure_1d_float_array(melody_audio, "melody")
         vocal_audio = self._ensure_1d_float_array(vocal_audio, "vocal")
 
         logger.debug(f"After ensure_1d - melody: {melody_audio.shape}, vocal: {vocal_audio.shape}")
 
-        # Match lengths
+        # match lengths
         melody_audio, vocal_audio = self.match_lengths(melody_audio, vocal_audio)
 
         logger.debug(f"After match_lengths - melody: {melody_audio.shape}, vocal: {vocal_audio.shape}")
 
-        # Apply volumes
+        # apply volumes
         melody_scaled = melody_audio * melody_volume
         vocal_scaled = vocal_audio * vocal_volume
 
-        # Mix
         mixed = melody_scaled + vocal_scaled
 
-        # Normalize to prevent clipping
+        # normalize to prevent clipping
         if normalize_output:
             mixed = self.normalize_audio(mixed)
         else:
@@ -340,7 +338,7 @@ class AudioMixer:
 
         sr = sample_rate or self.sample_rate
 
-        # Ensure proper format
+        # ensure proper format
         audio = self._ensure_1d_float_array(audio, "save_output")
 
         os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
@@ -363,7 +361,7 @@ class AudioMixer:
         logger.info(f"  MIDI: {midi_path}")
         logger.info(f"  Vocal: {vocal_path}")
 
-        # Render MIDI to audio
+        # render MIDI to audio
         logger.info("Rendering MIDI to audio...")
         melody_audio, melody_sr = self.midi_to_audio(
             midi_path,
@@ -371,18 +369,18 @@ class AudioMixer:
         )
         logger.info(f"Melody audio: {len(melody_audio)} samples, {melody_sr} Hz")
 
-        # Load vocal audio
+        # load vocal audio
         logger.info("Loading vocal audio...")
         vocal_audio, vocal_sr = self.load_audio(vocal_path)
         logger.info(f"Vocal audio: {len(vocal_audio)} samples, {vocal_sr} Hz")
 
-        # Resample if needed
+        # resample if needed
         if melody_sr != vocal_sr:
             logger.info(f"Resampling melody from {melody_sr} to {vocal_sr}")
             melody_audio = self._resample(melody_audio, melody_sr, vocal_sr)
             melody_sr = vocal_sr
 
-        # Mix tracks
+        # mix
         logger.info("Mixing tracks...")
         mixed_audio = self.mix_tracks(
             melody_audio,
@@ -391,7 +389,6 @@ class AudioMixer:
             vocal_volume=vocal_volume
         )
 
-        # Save output
         self.save_audio(mixed_audio, output_path, vocal_sr)
 
         return output_path
@@ -414,7 +411,7 @@ class AudioMixer:
             return self._ensure_1d_float_array(resampled, "resample_output")
         except ImportError:
             logger.warning("librosa not available, using linear interpolation")
-            # Simple linear interpolation fallback
+            # simple linear interpolation fallback (please use librosa)
             ratio = target_sr / orig_sr
             new_length = int(len(audio) * ratio)
             indices = np.linspace(0, len(audio) - 1, new_length)

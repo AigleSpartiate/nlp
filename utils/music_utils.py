@@ -93,7 +93,7 @@ class MusicUtils:
         else:
             return note_name
 
-        # Add enharmonic if needed
+        # add enharmonic if needed
         if base_note in MusicUtils.ENHARMONIC_MAP:
             return f"{MusicUtils.ENHARMONIC_MAP[base_note]}{octave}"
 
@@ -108,18 +108,18 @@ class MusicUtils:
         if note_name.lower() == "rest":
             return "rest"
 
-        # Check if it contains a slash (enharmonic notation)
+        # check if contains a slash (enharmonic notation)
         if "/" not in note_name:
             return note_name
 
-        # Extract the enharmonic part and octave
+        # extract enharmonic part and octave
         # Format is like "F#/Gb5" or "C#/Db4"
         for enharmonic, standard in MusicUtils.ENHARMONIC_REVERSE_MAP.items():
             if note_name.startswith(enharmonic):
                 octave = note_name[len(enharmonic):]
                 return f"{standard}{octave}"
 
-        # Fallback: take the first part before slash
+        # fallback: take the first part before slash
         parts = note_name.split("/")
         if len(parts) == 2:
             # "F#" from "F#/Gb5" - need to get octave from second part
@@ -154,11 +154,11 @@ class MusicUtils:
     def get_vocal_range(voice_type: str = "medium") -> Tuple[int, int]:
         """Get MIDI range for voice type"""
         ranges = {
-            "soprano": (60, 84),
-            "alto": (55, 77),
-            "tenor": (48, 72),
-            "bass": (40, 64),
-            "medium": (55, 77),
+            "soprano": (60, 84),  # C4 - C6
+            "alto": (55, 77),  # G3 - F5
+            "tenor": (48, 72),  # C3 - C5
+            "bass": (40, 64),  # E2 - E4
+            "medium": (55, 77),  # G3 - F5
         }
         return ranges.get(voice_type, ranges["medium"])
 
@@ -166,7 +166,7 @@ class MusicUtils:
     def clamp_to_range(midi_note: int, min_note: int, max_note: int) -> int:
         """Clamp a MIDI note to a range, adjusting octave if needed"""
         if midi_note < 0:
-            return midi_note
+            return midi_note  # rest
 
         while midi_note < min_note:
             midi_note += 12
@@ -178,7 +178,7 @@ class MusicUtils:
     @staticmethod
     def generate_note_duration(tempo: int, base_duration: str = "quarter") -> float:
         """Generate note duration in seconds"""
-        beat_duration = 60.0 / tempo
+        beat_duration = 60.0 / tempo  # seconds per beat
 
         duration_map = {
             "whole": 4.0,

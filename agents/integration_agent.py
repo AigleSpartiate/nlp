@@ -1,18 +1,17 @@
 import json
 import os
 from datetime import datetime
-from typing import Dict, Optional
+from typing import Dict
 
-from config import SongComposerConfig
 from models.lyric_analysis import LyricAnalysis
 from models.melody import Melody
 from models.song import Song
+from .accompaniment_agent import AccompanimentAgent
+from .audio_mixing_agent import AudioMixingAgent
 from .base_agent import BaseAgent
 from .lyric_analysis_agent import LyricAnalysisAgent
 from .melody_generation_agent import MelodyGenerationAgent
 from .singing_synthesis_agent import SingingSynthesisAgent
-from .audio_mixing_agent import AudioMixingAgent
-from .accompaniment_agent import AccompanimentAgent
 
 
 class IntegrationAgent(BaseAgent):

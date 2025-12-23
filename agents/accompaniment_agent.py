@@ -1,5 +1,6 @@
 import json
 from typing import List
+
 from music21 import stream, note, chord, instrument, tempo, midi
 
 from models.melody import Melody
@@ -34,7 +35,7 @@ Respond in JSON format:
         drum_part = stream.Part()
         drum_part.insert(0, instrument.Percussion())
 
-        # Standard Rock/Pop Beat
+        # some default rock/pop beat
         for m in range(measures):
             # Kick (MIDI 36) on beat 1 and 3
             k1 = note.Note(36);
@@ -109,13 +110,13 @@ Respond in JSON format:
     def process(self, melody: Melody, output_path: str) -> str:
         self.log("Generating accompaniment...")
 
-        # 1. Calculate Song Length in Measures
-        # Assuming 4/4 time for simplicity
+        # Song length in measures
+        # TODO: Assuming 4/4 time for simplicity (to fix)
         total_seconds = melody.total_duration()
         beats = (total_seconds / 60) * melody.tempo
-        measures = int(beats / 4) + 2  # Add buffer
+        measures = int(beats / 4) + 2  # add buffer
 
-        # 2. Get Chords from LLM
+        # Get chords from LLM
         prompt = self._get_chord_prompt(melody.key_signature, "pop", measures)
         try:
             resp = self.llm_client.complete(prompt, temperature=0.7)
@@ -125,22 +126,22 @@ Respond in JSON format:
             self.log(f"Chord generation failed, using default: {e}", "warning")
             chords_list = [melody.key_signature] * measures
 
-        # 3. Create Multi-track Score
+        # create multi-track score
         score = stream.Score()
         score.insert(0, tempo.MetronomeMark(number=melody.tempo))
 
-        # Add the original Melody (Lead)
-        # We need to reconstruct the melody part from your Melody object
+        # Add the original melody (lead)
+        # reconstruct the melody part from Melody object
         melody_part = melody.to_music21_stream()
-        melody_part.insert(0, instrument.Oboe())  # Make melody stand out
+        melody_part.insert(0, instrument.Oboe())  # to make melody stand out
         score.insert(0, melody_part)
 
-        # Add Backing Tracks
+        # Backing Tracks (NOT llm generated, the results are too bad)
         self._generate_drums(score, measures, melody.tempo)
         self._generate_bass(score, chords_list)
         self._generate_chords(score, chords_list, "pop")
 
-        # 4. Export
+        # export + close
         mf = midi.translate.music21ObjectToMidiFile(score)
         mf.open(output_path, 'wb')
         mf.write()

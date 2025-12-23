@@ -29,14 +29,13 @@ def main():
     parser.add_argument("--soundfont", type=str, help="Path to soundfont (.sf2) for MIDI rendering")
     parser.add_argument("--print-input", action="store_true", help="Print DiffSinger input only")
 
-    # Standalone mixing mode
+    # standalone mixing mode
     parser.add_argument("--mix-only", action="store_true", help="Only mix existing files")
     parser.add_argument("--midi-file", type=str, help="MIDI file for mixing")
     parser.add_argument("--vocal-file", type=str, help="Vocal WAV file for mixing")
 
     args = parser.parse_args()
 
-    # config
     config = SongComposerConfig(output_dir=args.output_dir)
 
     pipeline = SongPipeline(

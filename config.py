@@ -94,6 +94,7 @@ class SongComposerConfig:
     def __post_init__(self):
         os.makedirs(self.output_dir, exist_ok=True)
 
+
 @dataclass
 class MixingConfig:
     """Configuration for audio mixing"""

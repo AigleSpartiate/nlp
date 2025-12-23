@@ -1,4 +1,3 @@
-# models/melody.py (updated)
 from dataclasses import dataclass, field
 from typing import List, Optional, Dict, Any, Tuple
 
@@ -106,7 +105,7 @@ class Melody:
         durations_parts = []
 
         for wn in self.word_notes:
-            # Use DiffSinger format for notes
+            # use DiffSinger format for notes
             notes_parts.append(wn.get_notes_string(for_diffsinger=True))
             durations_parts.append(wn.get_durations_string())
 
@@ -128,13 +127,13 @@ class Melody:
         """Convert to music21 stream for MIDI export"""
         s = stream.Stream()
 
-        # Add tempo
+        # add tempo
         s.append(tempo.MetronomeMark(number=self.tempo))
 
-        # Add key signature - handle potential issues
+        # add key signature + handle potential issues
         try:
             key_sig = self.key_signature
-            # Clean up key signature if needed
+            # clean up key signature if needed
             if "/" in key_sig:
                 key_sig = key_sig.split("/")[0]
             s.append(m21_key.Key(key_sig))
@@ -142,15 +141,15 @@ class Melody:
             # Fallback to C major
             s.append(m21_key.Key("C"))
 
-        # Add time signature
+        # add time signature
         s.append(meter.TimeSignature(self.time_signature))
 
-        # Add notes
+        # add notes
         for note_event in self.get_all_notes():
             if note_event.is_rest:
                 n = m21_note.Rest()
             else:
-                # Use MIDI-compatible format (not DiffSinger format)
+                # MIDI-compatible format (not DiffSinger format)
                 note_pitch = note_event.get_pitch_for_midi()
                 try:
                     n = m21_note.Note(note_pitch)
@@ -160,7 +159,7 @@ class Melody:
                     n = m21_note.Note("C4")
                     n.volume.velocity = note_event.velocity
 
-            # Convert duration from seconds to quarter notes
+            # convert duration from seconds to quarter notes
             quarter_note_duration = 60.0 / self.tempo
             n.quarterLength = note_event.duration / quarter_note_duration
 

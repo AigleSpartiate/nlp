@@ -61,7 +61,7 @@ class SingingSynthesisAgent(BaseAgent):
     ) -> str:
         """Synthesize audio using DiffSinger"""
 
-        # 1. Internal Pipeline (if provided)
+        # Internal pipeline (if provided) -> DEPRECATED
         if self.diffsinger_pipeline is not None:
             self.log("Using internal DiffSinger pipeline object.")
             input_dict = ds_input.to_dict()
@@ -75,7 +75,7 @@ class SingingSynthesisAgent(BaseAgent):
                 self.log(f"Internal synthesis failed: {e}", "error")
                 raise
 
-        # 2. External Subprocess (Default)
+        # External subprocess (Default)
         self.log("Using external DiffSinger subprocess.")
         return self._synthesize_subprocess(ds_input, output_path)
 
@@ -126,7 +126,6 @@ class SingingSynthesisAgent(BaseAgent):
                 env=env
             )
 
-            # Log stdout/stderr for debugging
             if result.stdout:
                 self.log(f"DiffSinger STDOUT:\n{result.stdout[-500:]}...", level="info")  # Log last 500 chars
 
@@ -140,12 +139,10 @@ class SingingSynthesisAgent(BaseAgent):
 
             if not os.path.exists(default_output_location):
                 self.log(f"Expected output file not found at: {default_output_location}", "error")
-                # Sometimes checking stderr helps here
                 if result.stderr:
                     self.log(f"Full STDERR: {result.stderr}", "error")
                 raise RuntimeError("DiffSinger finished but output file was not created.")
 
-            # Move/Copy to the desired output path
             os.makedirs(os.path.dirname(output_path), exist_ok=True)
             shutil.copy2(default_output_location, output_path)
             self.log(f"Successfully synthesized audio to: {output_path}")
@@ -153,7 +150,7 @@ class SingingSynthesisAgent(BaseAgent):
             return output_path
 
         finally:
-            # Clean up temp input file
+            # clean up temp input file
             if os.path.exists(tmp_input_path):
                 os.unlink(tmp_input_path)
 

@@ -60,13 +60,13 @@ class AudioMixingAgent(BaseAgent):
         self.log(f"  MIDI: {midi_path}")
         self.log(f"  Vocal: {vocal_path}")
 
-        # Validate inputs
+        # validate inputs
         if not os.path.exists(midi_path):
             raise FileNotFoundError(f"MIDI file not found: {midi_path}")
         if not os.path.exists(vocal_path):
             raise FileNotFoundError(f"Vocal file not found: {vocal_path}")
 
-        # Generate output path if not provided
+        # generate output path if not provided
         if output_path is None:
             base_name = os.path.splitext(os.path.basename(midi_path))[0]
             output_path = os.path.join(
@@ -75,7 +75,7 @@ class AudioMixingAgent(BaseAgent):
             )
 
         try:
-            # Create the mix
+            # create the mix
             result_path = self.mixer.create_final_mix(
                 midi_path=midi_path,
                 vocal_path=vocal_path,
