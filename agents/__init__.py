@@ -1,3 +1,4 @@
+from .audio_mixing_agent import AudioMixingAgent
 from .base_agent import BaseAgent
 from .integration_agent import IntegrationAgent
 from .lyric_analysis_agent import LyricAnalysisAgent
@@ -9,5 +10,6 @@ __all__ = [
     "LyricAnalysisAgent",
     "MelodyGenerationAgent",
     "SingingSynthesisAgent",
+    "AudioMixingAgent",
     "IntegrationAgent"
 ]

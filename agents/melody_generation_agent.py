@@ -132,9 +132,17 @@ Respond ONLY with the JSON object."""
         return notes, durations
 
     def _validate_and_format_note(self, note: str) -> str:
-        """Validate and format note for output"""
+        """Validate and format note - returns STANDARD format (e.g., F#4, not F#/Gb4)"""
         if not note or note.lower() == "rest":
             return "rest"
+
+        # clean up the note string
+        note = note.strip()
+
+        # if it's already in DiffSinger format, convert back (pipeline could be cleaner...)
+        if "/" in note:
+            from utils.music_utils import MusicUtils
+            note = MusicUtils.from_diffsinger_format(note)
 
         # extract note name and octave
         match = re.match(r'^([A-Ga-g][#b]?)(\d)$', note)
@@ -168,17 +176,17 @@ Respond ONLY with the JSON object."""
             self.log(f"LLM generation failed: {e}, using rule-based", "warning")
             notes, durations = self._generate_rule_based_melody(num_words, analysis)
 
-        # melody structure
+        # build melody structure
         word_notes_list = []
 
         for i, word in enumerate(analysis.word_list):
             note_str = self._validate_and_format_note(notes[i] if i < len(notes) else "C4")
             duration = durations[i] if i < len(durations) else 0.4
 
-            formatted_note = MusicUtils.format_note_for_diffsinger(note_str)
-
+            # Store in STANDARD format (not DiffSinger format)
+            # The conversion to DiffSinger format happens in to_diffsinger_format()
             note_event = NoteEvent(
-                pitch=formatted_note,
+                pitch=note_str,  # Standard format: "F#5", not "F#/Gb5"
                 duration=duration,
                 word_index=i,
                 is_rest=(note_str == "rest")

@@ -1,7 +1,7 @@
 import os
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import List
+from typing import List, Optional
 
 
 class MusicStyle(Enum):
@@ -90,6 +90,33 @@ class SongComposerConfig:
     output_dir: str = "./output"
     log_level: str = "INFO"
     language: str = "auto"  # auto, chinese or english
+
+    def __post_init__(self):
+        os.makedirs(self.output_dir, exist_ok=True)
+
+
+@dataclass
+class MixingConfig:
+    """Configuration for audio mixing"""
+    default_melody_volume: float = 0.9
+    default_vocal_volume: float = 1.0
+    soundfont_path: Optional[str] = field(
+        default_factory=lambda: os.getenv("SOUNDFONT_PATH")
+    )
+    normalize_output: bool = True
+
+
+@dataclass
+class SongComposerConfig:
+    """Main configuration class"""
+    melody: MelodyConfig = field(default_factory=MelodyConfig)
+    synthesis: SynthesisConfig = field(default_factory=SynthesisConfig)
+    mixing: MixingConfig = field(default_factory=MixingConfig)  # NEW
+    cerebras: CerebrasConfig = field(default_factory=CerebrasConfig)
+
+    output_dir: str = "./output"
+    log_level: str = "INFO"
+    language: str = "auto"
 
     def __post_init__(self):
         os.makedirs(self.output_dir, exist_ok=True)

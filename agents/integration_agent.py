@@ -3,10 +3,11 @@ import os
 from datetime import datetime
 from typing import Dict
 
-from config import SongComposerConfig
 from models.lyric_analysis import LyricAnalysis
 from models.melody import Melody
 from models.song import Song
+from .accompaniment_agent import AccompanimentAgent
+from .audio_mixing_agent import AudioMixingAgent
 from .base_agent import BaseAgent
 from .lyric_analysis_agent import LyricAnalysisAgent
 from .melody_generation_agent import MelodyGenerationAgent
@@ -16,12 +17,7 @@ from .singing_synthesis_agent import SingingSynthesisAgent
 class IntegrationAgent(BaseAgent):
     """Agent for coordinating the complete workflow"""
 
-    def __init__(
-            self,
-            config: SongComposerConfig,
-            diffsinger_pipeline=None,
-            **kwargs
-    ):
+    def __init__(self, config, diffsinger_pipeline=None, soundfont_path=None, **kwargs):
         super().__init__(config, **kwargs)
 
         # Initialize sub-agents
@@ -32,6 +28,12 @@ class IntegrationAgent(BaseAgent):
             diffsinger_pipeline=diffsinger_pipeline,
             llm_client=self.llm_client
         )
+        self.mixing_agent = AudioMixingAgent(
+            config,
+            soundfont_path=soundfont_path,
+            llm_client=self.llm_client
+        )
+        self.accompaniment_agent = AccompanimentAgent(config, self.llm_client)
 
     @property
     def name(self) -> str:
@@ -45,6 +47,10 @@ class IntegrationAgent(BaseAgent):
         """Set the DiffSinger pipeline"""
         self.synthesis_agent.set_pipeline(pipeline)
 
+    def set_soundfont(self, path: str):
+        """Set the soundfont for MIDI rendering"""
+        self.mixing_agent.set_soundfont(path)
+
     def _validate_workflow(
             self,
             analysis: LyricAnalysis,
@@ -55,7 +61,7 @@ class IntegrationAgent(BaseAgent):
         if len(analysis.word_list) != len(melody.word_notes):
             return False, f"Word count mismatch: analysis has {len(analysis.word_list)}, melody has {len(melody.word_notes)}."
 
-        # Validate melody
+        # validate melody
         is_valid, msg = melody.validate(len(analysis.word_list))
         if not is_valid:
             return False, msg
@@ -70,7 +76,8 @@ class IntegrationAgent(BaseAgent):
 
         return {
             "midi": os.path.join(self.config.output_dir, f"{base_name}.mid"),
-            "audio": os.path.join(self.config.output_dir, f"{base_name}.{self.config.synthesis.output_format}"),
+            "vocal": os.path.join(self.config.output_dir, f"{base_name}_vocal.{self.config.synthesis.output_format}"),
+            "final": os.path.join(self.config.output_dir, f"{base_name}_final.{self.config.synthesis.output_format}"),
             "metadata": os.path.join(self.config.output_dir, f"{base_name}_metadata.json")
         }
 
@@ -79,9 +86,23 @@ class IntegrationAgent(BaseAgent):
             lyrics: str,
             title: str = "Untitled",
             synthesize: bool = True,
-            export_midi: bool = True
+            export_midi: bool = True,
+            create_final_mix: bool = True,
+            melody_volume: float = 0.9,
+            vocal_volume: float = 1.0
     ) -> Song:
-        """Run the complete workflow"""
+        """
+        Run the complete workflow.
+
+        Args:
+            lyrics: Input lyrics text
+            title: Song title
+            synthesize: Whether to run DiffSinger synthesis
+            export_midi: Whether to export MIDI file
+            create_final_mix: Whether to create final mixed audio
+            melody_volume: Volume for melody in final mix (0.0-1.0)
+            vocal_volume: Volume for vocals in final mix (0.0-1.0)
+        """
         self.log(f"Starting song composition: {title}")
 
         # create song object
@@ -120,21 +141,45 @@ class IntegrationAgent(BaseAgent):
 
         if export_midi:
             try:
-                song.midi_path = song.melody.export_midi(paths["midi"])
-                self.log(f"MIDI exported: {song.midi_path}")
+                self.log("Generating full arrangement...")
+                # This now generates Melody + Bass + Drums + Chords
+                song.midi_path = self.accompaniment_agent.process(
+                    song.melody,
+                    paths["midi"]
+                )
+                self.log(f"Full arrangement MIDI exported: {song.midi_path}")
             except Exception as e:
-                self.log(f"MIDI export failed: {e}", "warning")
+                self.log(f"Accompaniment failed: {e}", "error")
+                # Fallback to simple melody
+                song.midi_path = song.melody.export_midi(paths["midi"])
 
         if synthesize:
-            self.log("Synthesizing audio...")
+            self.log("Synthesizing vocals...")
             try:
-                result = self.synthesis_agent.process(song.melody, paths["audio"])
-                song.audio_path = result.get("audio_path")
-                self.log(f"Audio synthesized: {song.audio_path}")
+                result = self.synthesis_agent.process(song.melody, paths["vocal"])
+                song.vocal_audio_path = result.get("audio_path")
+                self.log(f"Vocals synthesized: {song.vocal_audio_path}")
             except RuntimeError as e:
                 self.log(f"Synthesis skipped: {e}", "warning")
             except Exception as e:
                 self.log(f"Synthesis failed: {e}", "error")
+
+        if create_final_mix and song.midi_path and song.vocal_audio_path:
+            self.log("Creating final mix...")
+            try:
+                mix_result = self.mixing_agent.process(
+                    midi_path=song.midi_path,
+                    vocal_path=song.vocal_audio_path,
+                    output_path=paths["final"],
+                    melody_volume=melody_volume,
+                    vocal_volume=vocal_volume
+                )
+                song.final_audio_path = mix_result.get("final_audio_path")
+                self.log(f"Final mix created: {song.final_audio_path}")
+            except FileNotFoundError as e:
+                self.log(f"Final mix skipped (missing soundfont): {e}", "warning")
+            except Exception as e:
+                self.log(f"Final mix failed: {e}", "warning")
 
         # metadata
         try:
@@ -151,7 +196,6 @@ class IntegrationAgent(BaseAgent):
     def process_to_diffsinger_input(self, lyrics: str) -> Dict[str, str]:
         """
         Simplified method to get just the DiffSinger input format.
-        Useful when running DiffSinger separately.
         """
         analysis = self.lyric_agent.process(lyrics)
         melody = self.melody_agent.process(analysis)
