@@ -5,12 +5,12 @@ pandas
 numba==0.53.1
 numpy==1.19.2
 scipy==1.5.4
-PyYAML==5.3.1
+PyYAML>=5.4.1
 tensorboardX
 pyloudnorm
 setuptools>=41.0.0
 g2p_en
-resemblyzer
+Resemblyzer==0.1.1.dev0
 webrtcvad
 tensorboard==2.6.0
 scikit-learn==0.24.1

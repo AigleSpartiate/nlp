@@ -1,6 +1,9 @@
 import torch
 # from inference.tts.fs import FastSpeechInfer
 # from modules.tts.fs2_orig import FastSpeech2Orig
+import os
+import sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 from inference.svs.base_svs_infer import BaseSVSInfer
 from utils import load_ckpt
 from utils.hparams import hparams
@@ -46,22 +49,19 @@ class DiffSingerE2EInfer(BaseSVSInfer):
         wav_out = wav_out.cpu().numpy()
         return wav_out[0]
 
+
 if __name__ == '__main__':
-    inp = {
-        'text': '小酒窝长睫毛AP是你最美的记号',
-        'notes': 'C#4/Db4 | F#4/Gb4 | G#4/Ab4 | A#4/Bb4 F#4/Gb4 | F#4/Gb4 C#4/Db4 | C#4/Db4 | rest | C#4/Db4 | A#4/Bb4 | G#4/Ab4 | A#4/Bb4 | G#4/Ab4 | F4 | C#4/Db4',
-        'notes_duration': '0.407140 | 0.376190 | 0.242180 | 0.509550 0.183420 | 0.315400 0.235020 | 0.361660 | 0.223070 | 0.377270 | 0.340550 | 0.299620 | 0.344510 | 0.283770 | 0.323390 | 0.360340',
-        'input_type': 'word'
-    }  # user input: Chinese characters
-    c = {
-        'text': '小酒窝长睫毛AP是你最美的记号',
-        'ph_seq': 'x iao j iu w o ch ang ang j ie ie m ao AP sh i n i z ui m ei d e j i h ao',
-        'note_seq': 'C#4/Db4 C#4/Db4 F#4/Gb4 F#4/Gb4 G#4/Ab4 G#4/Ab4 A#4/Bb4 A#4/Bb4 F#4/Gb4 F#4/Gb4 F#4/Gb4 C#4/Db4 C#4/Db4 C#4/Db4 rest C#4/Db4 C#4/Db4 A#4/Bb4 A#4/Bb4 G#4/Ab4 G#4/Ab4 A#4/Bb4 A#4/Bb4 G#4/Ab4 G#4/Ab4 F4 F4 C#4/Db4 C#4/Db4',
-        'note_dur_seq': '0.407140 0.407140 0.376190 0.376190 0.242180 0.242180 0.509550 0.509550 0.183420 0.315400 0.315400 0.235020 0.361660 0.361660 0.223070 0.377270 0.377270 0.340550 0.340550 0.299620 0.299620 0.344510 0.344510 0.283770 0.283770 0.323390 0.323390 0.360340 0.360340',
-        'is_slur_seq': '0 0 0 0 0 0 0 0 1 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0',
-        'input_type': 'phoneme'
-    }  # input like Opencpop dataset.
+    import argparse
+    import json
+
+    # use parse_known_args so we don't conflict with DiffSinger's internal hparams parsing
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--input_file", type=str, default=None, help="Path to input JSON file")
+    args, unknown = parser.parse_known_args()
+
+    if args.input_file and os.path.exists(args.input_file):
+        print(f"Loading input from: {args.input_file}")
+        with open(args.input_file, 'r', encoding='utf-8') as f:
+            inp = json.load(f)
+
     DiffSingerE2EInfer.example_run(inp)
-
-
-# python inference/svs/ds_e2e.py --config usr/configs/midi/e2e/opencpop/ds100_adj_rel.yaml --exp_name 0228_opencpop_ds100_rel
