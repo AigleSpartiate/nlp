@@ -169,6 +169,7 @@ def get_pitch(wav_data, mel, hparams):
     f0 = parselmouth.Sound(wav_data, hparams['audio_sample_rate']).to_pitch_ac(
         time_step=time_step / 1000, voicing_threshold=0.6,
         pitch_floor=f0_min, pitch_ceiling=f0_max).selected_array['frequency']
+    f0 = clean_f0(f0, hparams)
     lpad = pad_size * 2
     rpad = len(mel) - len(f0) - lpad
     f0 = np.pad(f0, [[lpad, rpad]], mode='constant')
@@ -183,6 +184,33 @@ def get_pitch(wav_data, mel, hparams):
     pitch_coarse = f0_to_coarse(f0)
     return f0, pitch_coarse
 
+def clean_f0(f0, hparams):
+    """Remove artifacts and smooth the raw F0 contour."""
+    import scipy.signal
+
+    # outlier removal on voiced frames
+    voiced = f0 > 0
+    if voiced.sum() > 2:
+        mu, sigma = f0[voiced].mean(), f0[voiced].std()
+        outliers = voiced & ((f0 < mu - 3 * sigma) | (f0 > mu + 3 * sigma))
+        f0[outliers] = 0.0
+
+    # median filter to suppress frame-level jitter
+    kernel = hparams.get('f0_smooth_kernel', 5)
+    if kernel > 1:
+        f0 = scipy.signal.medfilt(f0, kernel_size=kernel)
+
+    # interpolate short unvoiced gaps (todo: double check with and without this, might be bad)
+    max_gap = hparams.get('f0_interp_max_gap', 4)
+    nz = np.where(f0 > 0)[0]
+    if len(nz) > 1:
+        for i in range(len(nz) - 1):
+            gap = nz[i + 1] - nz[i]
+            if 1 < gap <= max_gap + 1:
+                f0[nz[i]:nz[i + 1] + 1] = np.linspace(
+                    f0[nz[i]], f0[nz[i + 1]], gap + 1)
+
+    return f0
 
 def remove_empty_lines(text):
     """remove empty lines"""

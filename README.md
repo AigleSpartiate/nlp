@@ -1,5 +1,14 @@
 # nlp
+<div align="center">
 
+## ⚠️ IMPORTANT NOTICE TO THE UPSaclay ADMISSION COMMITTEE ⚠️
+
+### I did not submit the full questionnaire in time on MonMaster.
+### If you are willing to read the latest completed version, [**please click here**](./final.pdf). Thank you for your time.
+
+---
+
+</div>
 It is ***heavily*** recommended to run the project on Linux (tested on Ubuntu 25.10) for easier dependencies management.
 
 The project has been tested to function on a NVIDIA GeForce RTX 3080 GPU. If for some reason the project seems to be failing at the DiffSinger stage of the pipeline (e.g., a CUDA related-error) it is probably linked to the GPU being used that requires specific CUDA version.
@@ -8,7 +17,7 @@ To reproduce:
 
 - Clone/download the repo.
 
-- This project uses the Cerebras Inference API for fast LLM inference. Please create a free account at https://www.cerebras.ai/ and then generate an API key on https://cloud.cerebras.ai/
+- This project uses the Cerebras Inference API for fast LLM inference. Please create a free account at https://www.cerebras.ai/ and then generate an API key on https://cloud.cerebras.ai/.
 Our project will access it via the CEREBRAS_API_KEY environment variable, please set this variable's value to your generated API key.
 
 - Inside the project folder, sync the dependencies using `uv sync`, this will also automatically create your project environment.
