@@ -1,17 +1,7 @@
 # nlp
-<div align="center">
-
-## ⚠️ IMPORTANT NOTICE TO THE UPSaclay ADMISSION COMMITTEE ⚠️
-
-### I did not submit the full questionnaire in time on MonMaster.
-### If you are willing to read the latest completed version, [**please click here**](./final.pdf). Thank you for your time.
-
----
-
-</div>
 It is ***heavily*** recommended to run the project on Linux (tested on Ubuntu 25.10) for easier dependencies management.
 
-The project has been tested to function on a NVIDIA GeForce RTX 3080 GPU. If for some reason the project seems to be failing at the DiffSinger stage of the pipeline (e.g., a CUDA related-error) it is probably linked to the GPU being used that requires specific CUDA version.
+The project has been tested to function on a NVIDIA GeForce RTX 3080 GPU. If for some reason the project seems to be failing at the DiffSinger stage of the pipeline (e.g., a CUDA related-error) it is probably linked to the GPU being used that requires a specific CUDA version.
 
 To reproduce:
 
